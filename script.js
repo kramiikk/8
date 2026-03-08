@@ -1,30 +1,59 @@
-function updateClock() {
-    const now = new Date();
-    
-    let hours = now.getHours();
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    
-    // Always 2-digit hours for symmetry in Zen mode
-    const hoursStr = String(hours).padStart(2, '0');
-    
-    const hoursEl = document.getElementById('hours');
-    const minsEl = document.getElementById('minutes');
-    
-    if (hoursEl) hoursEl.textContent = hoursStr;
-    if (minsEl) minsEl.textContent = minutes;
+// Battery-conscious clock — updates only once per minute
+// Pauses all work when the tab/screen is hidden (Page Visibility API)
 
-    // Simplified date update
-    const dateEl = document.getElementById('date');
-    if (dateEl) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        dateEl.textContent = now.toLocaleDateString('en-US', options);
-    }
+const hoursEl  = document.getElementById('hours');
+const minsEl   = document.getElementById('minutes');
+const dateEl   = document.getElementById('date');
+const heartEl  = document.querySelector('.heart');
+
+const DATE_OPTS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+function updateClock() {
+    const now     = new Date();
+    const hours   = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    if (hoursEl)  hoursEl.textContent  = hours;
+    if (minsEl)   minsEl.textContent   = minutes;
+    if (dateEl)   dateEl.textContent   = now.toLocaleDateString('en-US', DATE_OPTS);
 }
 
-// Initial update
-updateClock();
-// Update every minute (more than enough for Zen mode without seconds)
-setInterval(updateClock, 60000);
+// Schedule next tick exactly at the next whole minute
+function scheduleNextMinute() {
+    const now  = new Date();
+    const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    return setTimeout(() => {
+        updateClock();
+        intervalId = setInterval(updateClock, 60_000);
+    }, msUntilNextMinute);
+}
 
-// Smooth entry
-document.addEventListener('DOMContentLoaded', updateClock);
+let timeoutId  = null;
+let intervalId = null;
+
+function startClock() {
+    updateClock();
+    timeoutId = scheduleNextMinute();
+    if (heartEl) heartEl.style.animationPlayState = 'running';
+}
+
+function stopClock() {
+    clearTimeout(timeoutId);
+    clearInterval(intervalId);
+    timeoutId  = null;
+    intervalId = null;
+    // Pause heart animation to save GPU/battery
+    if (heartEl) heartEl.style.animationPlayState = 'paused';
+}
+
+// Page Visibility API — pause when screen is off or tab is hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopClock();
+    } else {
+        startClock();
+    }
+});
+
+// Kick off
+startClock();
