@@ -29,7 +29,7 @@ function updateClock() {
     let greetingText = '';
 
     if (now.getMonth() === 2 && now.getDate() === 8) {
-        greetingText = 'Happy March 8, Alina <span class="heart-blink">❤️</span>';
+        greetingText = 'Happy Women\'s Day, Alina! <span class="heart-blink">❤️</span>';
     } else if (hour24 >= 5 && hour24 < 12) {
         greetingText = 'Good Morning';
     } else if (hour24 >= 12 && hour24 < 17) {
