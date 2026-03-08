@@ -60,29 +60,35 @@ setTimeout(() => {
     updateClock();
     setInterval(updateClock, 1000);
 }, delay);
-// Parallax and Orientation effects
-document.addEventListener('mousemove', (e) => {
-    const { clientX, clientY } = e;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    
-    const moveX = (clientX - centerX) / 50;
-    const moveY = (clientY - centerY) / 50;
+// Parallax and Orientation effects with Easing
+const parallaxLayers = document.querySelectorAll('.parallax-layer');
+let targetX = 0, targetY = 0;
+let currentX = 0, currentY = 0;
+const easing = 0.08;
 
-    document.querySelectorAll('.drift').forEach((spot, index) => {
-        const speed = (index + 1) * 0.2;
-        spot.style.transform = `translate(${moveX * speed}px, ${moveY * speed}px)`;
+function updateParallax() {
+    currentX += (targetX - currentX) * easing;
+    currentY += (targetY - currentY) * easing;
+
+    parallaxLayers.forEach((layer, index) => {
+        const speed = (index + 1) * 0.4;
+        layer.style.transform = `translate(${currentX * speed}px, ${currentY * speed}px)`;
     });
+    requestAnimationFrame(updateParallax);
+}
+
+document.addEventListener('mousemove', (e) => {
+    targetX = (e.clientX - window.innerWidth / 2) / 40;
+    targetY = (e.clientY - window.innerHeight / 2) / 40;
 });
 
 if (window.DeviceOrientationEvent) {
     window.addEventListener('deviceorientation', (e) => {
-        const tiltX = e.gamma / 10; // Left-to-right tilt
-        const tiltY = e.beta / 10;  // Front-to-back tilt
-
-        document.querySelectorAll('.drift').forEach((spot, index) => {
-            const speed = (index + 1) * 0.5;
-            spot.style.transform = `translate(${tiltX * speed}px, ${tiltY * speed}px)`;
-        });
+        if (e.gamma !== null && e.beta !== null) {
+            targetX = e.gamma / 5;
+            targetY = e.beta / 5;
+        }
     });
 }
+
+updateParallax();
